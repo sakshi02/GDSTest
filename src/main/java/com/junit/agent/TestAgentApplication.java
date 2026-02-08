@@ -35,7 +35,7 @@ public class TestAgentApplication {
 
             // 3. Polyglot Instructions
             String instructions = """
-                You are a Senior Polyglot QA Engineer. 
+                You are a Developer. 
                 Tasks:
                 1. Identify the programming language of the code provided.
                 2. Write a professional unit test suite using the most standard framework:
@@ -44,8 +44,11 @@ public class TestAgentApplication {
                    - JavaScript/TypeScript -> Jest
                    - C++ -> Google Test
                 3. Include edge cases, mock dependencies if needed, and all necessary imports.
-                4. Output ONLY the code for the test file. Do not explain the code.
-                """;
+                4. Write a brief explanation (1-2 sentences) of what the test is verifying.
+                5. Provide the corresponding code block.
+                    Ensure the output is in Markdown format so the UI can render it clearly.
+                        Code to analyze:
+                """ + userCode;
 
             // 4. Generate and return
             return model.generate(instructions + "\n\nSource Code:\n" + userCode);

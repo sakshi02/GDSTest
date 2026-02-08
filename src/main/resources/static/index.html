@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Polyglot AI Agent</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polyglot AI Agent - Professional QA Dashboard</title>
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
@@ -10,79 +12,79 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 
     <style>
-        :root { --bg: #0f172a; --panel: #1e293b; --accent: #6366f1; }
+        :root { --bg: #0f172a; --panel: #1e293b; --accent: #6366f1; --success: #10b981; }
 
-        /* Forces the page to take up the full screen */
-        html, body { height: 100%; margin: 0; padding: 0; background: var(--bg); color: #f8fafc; font-family: 'Inter', sans-serif; }
+        /* Layout Reset */
+        html, body { height: 100vh; width: 100vw; margin: 0; background: var(--bg); color: #f8fafc; font-family: 'Inter', sans-serif; overflow: hidden; }
+        body { display: flex; flex-direction: column; }
 
-        body { display: flex; flex-direction: column; overflow: hidden; }
+        header { padding: 0 2rem; background: var(--panel); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; height: 65px; flex-shrink: 0; }
 
-        header {
-            padding: 1rem 2rem;
-            background: var(--panel);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #334155;
-            height: 60px;
-        }
+        .container { display: flex; flex: 1; padding: 1.5rem; gap: 1.5rem; height: calc(100vh - 65px); box-sizing: border-box; }
 
-        .container {
-            display: flex;
-            flex: 1;
-            padding: 1rem;
-            gap: 1rem;
-            overflow: hidden; /* Important for internal scrolling */
-        }
+        .panel { flex: 1; display: flex; flex-direction: column; background: var(--panel); border-radius: 12px; padding: 1rem; min-width: 0; height: 100%; box-sizing: border-box; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
 
-        .panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--panel);
-            border-radius: 12px;
-            padding: 1rem;
-            min-width: 0;
-        }
-
-        textarea {
+        /* INPUT & OUTPUT BOXES */
+        textarea, #testOutput {
             flex: 1;
             background: #020617;
             color: #e2e8f0;
             border: 1px solid #475569;
             padding: 1rem;
             font-family: 'Fira Code', monospace;
-            resize: none;
             border-radius: 8px;
             outline: none;
-            overflow: auto;
+            line-height: 1.5;
+
+            /* FORCED SCROLLBARS */
+            overflow: scroll !important;
             white-space: pre;
+            word-wrap: normal;
         }
 
-        #testOutput {
-            flex: 1;
-            background: #020617;
-            padding: 1rem;
-            overflow: auto;
-            border-radius: 8px;
-            border: 1px solid #334155;
+        /* Explaination Text Styles (rendered from Markdown) */
+        #testOutput p {
+            white-space: normal;
+            color: #94a3b8;
+            margin-bottom: 1rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* CUSTOM HIGH-VISIBILITY SCROLLBARS */
+        ::-webkit-scrollbar { width: 14px; height: 14px; }
+        ::-webkit-scrollbar-track { background: #020617; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb {
+            background: #64748b;
+            border-radius: 10px;
+            border: 3px solid #020617;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        /* Code Block Tweaks */
+        pre[class*="language-"] {
+            margin: 0 0 1.5rem 0 !important;
+            padding: 1rem !important;
+            background: #111827 !important;
+            border-radius: 6px;
+            overflow: visible !important;
         }
 
         .btn-group { display: flex; gap: 10px; }
-        button { background: var(--accent); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-clear { background: #334155; color: #94a3b8; }
-        .btn-download { background: #10b981; display: none; }
+        button { background: var(--accent); color: white; border: none; padding: 0.7rem 1.4rem; border-radius: 6px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        .btn-clear { background: #334155; }
+        #downloadBtn { background: var(--success); display: none; }
 
-        h3 { margin: 0 0 10px 0; color: #94a3b8; font-size: 0.8rem; text-transform: uppercase; }
+        h3 { margin: 0 0 10px 0; color: #6366f1; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <header>
-    <h2 style="margin:0;">🌍 Polyglot Agent</h2>
+    <h2 style="margin:0; font-size: 1.4rem;">🌍 Polyglot Agent <span style="font-weight: 300; font-size: 0.9rem; opacity: 0.7;">QA Console</span></h2>
     <div class="btn-group">
-        <button class="btn-clear" onclick="clearAll()">Clear</button>
-        <button class="btn-download" id="downloadBtn" onclick="downloadTest()">Download</button>
+        <button class="btn-clear" onclick="clearWorkspace()">Clear</button>
+        <button id="downloadBtn" onclick="downloadResult()">Download</button>
         <button id="runBtn" onclick="generateTest()">Analyze & Generate</button>
     </div>
 </header>
@@ -90,16 +92,16 @@
 <div class="container">
     <div class="panel">
         <h3>Input Source Code</h3>
-        <textarea id="codeInput" placeholder="Paste code here..."></textarea>
+        <textarea id="codeInput" wrap="off" placeholder="Paste your code here..."></textarea>
     </div>
     <div class="panel">
-        <h3>Agent Output</h3>
+        <h3>Test Logic & Code</h3>
         <div id="testOutput"></div>
     </div>
 </div>
 
 <script>
-    function clearAll() {
+    function clearWorkspace() {
         document.getElementById('codeInput').value = '';
         document.getElementById('testOutput').innerHTML = '';
         document.getElementById('downloadBtn').style.display = 'none';
@@ -108,9 +110,13 @@
     async function generateTest() {
         const input = document.getElementById('codeInput').value;
         const outputDiv = document.getElementById('testOutput');
+        const btn = document.getElementById('runBtn');
+
         if (!input.trim()) return;
 
-        outputDiv.innerHTML = "<p>🤖 Agent is thinking...</p>";
+        btn.innerText = "🤖 Reasoning...";
+        btn.disabled = true;
+        outputDiv.innerHTML = "<p>Agent is analyzing the code and writing test cases with explanations...</p>";
 
         try {
             const response = await fetch('/generate-test', {
@@ -119,23 +125,34 @@
                 body: JSON.stringify({ code: input })
             });
             const data = await response.text();
+
+            // Render Markdown and apply Syntax Highlighting
             outputDiv.innerHTML = marked.parse(data);
             Prism.highlightAllUnder(outputDiv);
+
             document.getElementById('downloadBtn').style.display = 'inline-block';
-        } catch (error) {
-            outputDiv.innerHTML = "<p style='color:red;'>Error connecting to server.</p>";
+        } catch (e) {
+            outputDiv.innerHTML = "<p style='color:#ef4444;'>Connection failed. Is the Spring Boot server running?</p>";
+        } finally {
+            btn.innerText = "Analyze & Generate";
+            btn.disabled = false;
         }
     }
 
-    function downloadTest() {
+    function downloadResult() {
         const codeElement = document.querySelector('#testOutput pre code');
-        if (!codeElement) return;
-        const blob = new Blob([codeElement.innerText], { type: 'text/plain' });
+        const textContent = document.getElementById('testOutput').innerText;
+
+        if (!textContent) return;
+
+        // Download the full output (Explanations + Code)
+        const blob = new Blob([textContent], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = "GeneratedTest.txt";
+        a.download = "Agent_Test_Analysis.txt";
         a.click();
+        URL.revokeObjectURL(url);
     }
 </script>
 </body>
