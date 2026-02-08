@@ -1,9 +1,11 @@
-package com.junit.agent; // This matches your folder structure in the screenshot
+package com.junit.agent;
 
+import dev.langchain4j.model.openai.OpenAiChatModel;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.*;
-import dev.langchain4j.model.openai.OpenAiChatModel;
+import java.util.Map;
+import java.time.Duration;
 
 @SpringBootApplication
 @RestController
@@ -14,21 +16,42 @@ public class TestAgentApplication {
     }
 
     @PostMapping("/generate-test")
-    public String generateTest(@RequestBody java.util.Map<String, String> payload) {
+    public String generateTest(@RequestBody Map<String, String> payload) {
         try {
+            // 1. Extract the code from the request
             String userCode = payload.get("code");
+            if (userCode == null || userCode.isEmpty()) {
+                return "Error: No code provided.";
+            }
 
-            // Use the builder to specify gpt-4o-mini (it is faster and more reliable for demos)
+            // 2. Setup the AI Model (Using gpt-4o-mini for speed and polyglot support)
             OpenAiChatModel model = OpenAiChatModel.builder()
-                    .apiKey("demo") // Or your real key: System.getenv("OPENAI_API_KEY")
+                    .apiKey("demo") // Replace "demo" with your real key if it hits limits
                     .modelName("gpt-4o-mini")
-                    .logRequests(true) // This helps you see the actual error in console
+                    .timeout(Duration.ofSeconds(60))
+                    .logRequests(true)
                     .logResponses(true)
                     .build();
 
-            return model.generate("Create a JUnit 5 test class for this code:\n\n" + userCode);
+            // 3. Polyglot Instructions
+            String instructions = """
+                You are a Senior Polyglot QA Engineer. 
+                Tasks:
+                1. Identify the programming language of the code provided.
+                2. Write a professional unit test suite using the most standard framework:
+                   - Java -> JUnit 5 / Mockito
+                   - Python -> PyTest
+                   - JavaScript/TypeScript -> Jest
+                   - C++ -> Google Test
+                3. Include edge cases, mock dependencies if needed, and all necessary imports.
+                4. Output ONLY the code for the test file. Do not explain the code.
+                """;
+
+            // 4. Generate and return
+            return model.generate(instructions + "\n\nSource Code:\n" + userCode);
+
         } catch (Exception e) {
-            e.printStackTrace(); // This prints the EXACT error to your IntelliJ console
+            e.printStackTrace();
             return "Server Error: " + e.getMessage();
         }
     }
